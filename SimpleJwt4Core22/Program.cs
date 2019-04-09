@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace SimpleJwt4Core22
+namespace SimpleJwt4Core224Core22
 {
     public class Program
     {
