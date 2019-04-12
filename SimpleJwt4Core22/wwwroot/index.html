@@ -1,0 +1,162 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 25px;
+    }
+    label {
+      width: 80px;
+      display: inline-block;
+      margin: 2px;
+    }
+    input {
+      margin: 2px;
+    }
+    button {
+      width: 150px;
+      margin: 2px;
+    }
+    #result {
+      width: 75%;
+      height: 150px;
+    }
+  </style>
+</head>
+<body>
+  <h2>JWT Client</h2>
+  <label for="txtUserName">User Name </label><input type="text" id="txtUserName" value="johns" /><br />
+  <label for="txtRole">Role</label><input type="text" id="txtRole" value="admin" /><br />
+  <label for="txtId">Id</label><input type="number" id="txtId" value="42" /><br />
+  <label for="chkFail">Fail</label><input type="checkbox" id="chkFail" value="false" /><br />
+  <div id="access">
+    <h3>Make JWT</h3>
+    <button type="button" onclick="getJwt()">Get Token</button><br />
+    <button type="button" onclick="showJwt()">Show Token</button><br />
+    <button type="button" onclick="decode()">Decode</button><br />
+    <button type="button" onclick="deleteJwt()">Clear Token</button><br />
+  </div>
+  <div id="use">
+    <h3>Use JWT</h3>
+    <button type="button" onclick="makeCall('')">Call</button><br />
+    <button type="button" onclick="makeCall('/admin')">Call admin</button><br />
+    <button type="button" onclick="makeCall('/super')">Call super</button><br />
+    <button type="button" onclick="makeCall('/either')">Call either</button><br />
+    <button type="button" onclick="makeCall('/open')">Call open</button><br />
+  </div>
+  <label for="result">Results</label><br />
+  <textarea id="result"></textarea>
+  <script>
+
+    function getJwt() {
+
+      showResults("working ....");
+      const userName = document.getElementById("txtUserName").value;
+      const role = document.getElementById("txtRole").value;
+      const id = document.getElementById("txtId").value;
+      const fail = document.getElementById("chkFail").checked;
+
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            writeJwt(this.responseText);
+            showResults("token written to localStorage");
+          }
+          else {
+            alert(`${this.status}\n ${this.responseText}`);
+            showResults("Failed!");
+          }
+        }
+      };
+      xhttp.open("Post", "/api/jwt/maketoken", true);
+      xhttp.setRequestHeader("content-Type", "application/json");
+      var message = `{"UserName":"${userName}","Role": "${role}","Id": ${id},"Fail":${fail}}`;
+      xhttp.send(message);
+    }
+
+    function makeCall(urlExtension) {
+
+      showResults("working ....");
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            showResults(this.responseText);
+          }
+          else {
+            alert(`${this.status}\n ${this.responseText}`);
+            showResults("Failed!");
+          }
+        }
+      };
+      const jwt = readJwt();
+      xhttp.open("Get", `/api/values${urlExtension}`, true);
+      if (!!jwt) {
+        xhttp.setRequestHeader("Authorization", ` Bearer  ${jwt}`);
+      }
+      xhttp.send();
+    }
+
+
+    function showJwt() {
+      const jwt = readJwt();
+      if (jwt === null) {
+         showResults("no token to display");
+        return;
+      }
+      showResults(jwt);
+    }
+
+    function deleteJwt() {
+      clearJwt();
+    }
+
+    function writeJwt(jwt) {
+      if (typeof Storage !== "undefined") {
+        localStorage.setItem("jwt", jwt);
+      } else {
+        showResults("Sorry, your browser does not support Web Storage...")
+      }
+    }
+
+    function readJwt() {
+      if (typeof Storage !== "undefined") {
+        return localStorage.getItem("jwt");
+      } else {
+        showResults("Sorry, your browser does not support Web Storage...");
+      }
+      return "";
+    }
+
+    function clearJwt() {
+      if (typeof Storage !== "undefined") {
+        localStorage.removeItem("jwt");
+      } else {
+        showResults("Sorry, your browser does not support Web Storage...");
+      }
+    }
+
+    function decode() {
+      const jwt = readJwt();
+      if (jwt == null) {
+        showResults("no token to decode");
+        return;
+      }
+      const parsed = parseJwt(jwt);
+      showResults(JSON.stringify(parsed, null, 2));
+    }
+
+    //see https://stackoverflow.com/a/38552302/3819
+    function parseJwt(token) {
+      var base64Url = token.split('.')[1];
+      var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(window.atob(base64));
+    };
+
+    function showResults(results) {
+      document.getElementById("result").value = results;
+    }
+  </script>
+</body>
+</html>

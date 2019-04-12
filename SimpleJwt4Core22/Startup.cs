@@ -68,10 +68,13 @@ namespace SimpleJwt4Core224Core22
             // Use MVC
             app.UseMvc();
 
+            app.UseStaticFiles();
+
             // This needs to be last
             app.Run(async (context) =>
             {
-                await context.Response.WriteAsync("Hello World!");
+                //await context.Response.WriteAsync("Hello World!");
+                context.Response.Redirect("/index.html");
             });
         }
     }
