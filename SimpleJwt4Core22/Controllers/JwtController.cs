@@ -35,12 +35,15 @@ namespace SimpleJwt4Core22.Controllers
                 new Claim("id", model.Id.ToString()),
                 new Claim("role", model.Role)
             };
-            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SigningKey"]));
+
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                _configuration["Jwt:SigningKey"]));
             int experyInMinutes = Convert.ToInt32(_configuration["Jwt:ExperyInMinutes"]);
+            string site = _configuration["Jwt:Site"];
 
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Site"],
-                audience: _configuration["Jwt:Site"],
+                issuer: site,
+                audience: site,
                 expires: DateTime.UtcNow.AddMinutes(experyInMinutes),
                 signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
                 claims: claim
