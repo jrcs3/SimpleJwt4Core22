@@ -29,22 +29,28 @@ namespace SimpleJwt4Core22.Controllers
                 return BadRequest("JWT Creation Failure");
             }
 
+            // Create claims for any data I want to embed into the JWT
             var claim = new[]
             {
                 new Claim("name", model.UserName),
                 new Claim("id", model.Id.ToString()),
                 new Claim("role", model.Role)
             };
-            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SigningKey"]));
+            // Get configuration data
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                _configuration["Jwt:SigningKey"]));
             int experyInMinutes = Convert.ToInt32(_configuration["Jwt:ExperyInMinutes"]);
+            string site = _configuration["Jwt:Site"];
 
+            // Create the sighed token
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Site"],
-                audience: _configuration["Jwt:Site"],
+                issuer: site,
+                audience: site,
                 expires: DateTime.UtcNow.AddMinutes(experyInMinutes),
                 signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
                 claims: claim
             );
+            // send it out as 200
             return Ok(new JwtSecurityTokenHandler().WriteToken(token));
         }
     }
