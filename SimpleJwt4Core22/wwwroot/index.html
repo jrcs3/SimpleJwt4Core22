@@ -1,162 +1,198 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-  <style>
-    body {
-      margin: 25px;
-    }
-    label {
-      width: 80px;
-      display: inline-block;
-      margin: 2px;
-    }
-    input {
-      margin: 2px;
-    }
-    button {
-      width: 150px;
-      margin: 2px;
-    }
-    #result {
-      width: 75%;
-      height: 150px;
-    }
-  </style>
+    <style>
+        body {
+            margin: 25px;
+        }
+
+        label {
+            width: 80px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        input {
+            margin: 2px;
+        }
+
+        button {
+            width: 150px;
+            margin: 2px;
+        }
+
+        #result {
+            width: 100%;
+            height: 150px;
+        }
+        .grid-container {
+            width: 100%;
+            display: grid;
+            grid-gap: 10px;
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .grid-container {
+            display: inline-grid;
+        }
+    </style>
 </head>
 <body>
-  <h2>JWT Client</h2>
-  <label for="txtUserName">User Name </label><input type="text" id="txtUserName" value="johns" /><br />
-  <label for="txtRole">Role</label><input type="text" id="txtRole" value="admin" /><br />
-  <label for="txtId">Id</label><input type="number" id="txtId" value="42" /><br />
-  <label for="chkFail">Fail</label><input type="checkbox" id="chkFail" value="false" /><br />
-  <div id="access">
-    <h3>Make JWT</h3>
-    <button type="button" onclick="getJwt()">Get Token</button><br />
-    <button type="button" onclick="showJwt()">Show Token</button><br />
-    <button type="button" onclick="decode()">Decode</button><br />
-    <button type="button" onclick="deleteJwt()">Clear Token</button><br />
-  </div>
-  <div id="use">
-    <h3>Use JWT</h3>
-    <button type="button" onclick="makeCall('')">Call</button><br />
-    <button type="button" onclick="makeCall('/admin')">Call admin</button><br />
-    <button type="button" onclick="makeCall('/super')">Call super</button><br />
-    <button type="button" onclick="makeCall('/either')">Call either</button><br />
-    <button type="button" onclick="makeCall('/open')">Call open</button><br />
-  </div>
-  <label for="result">Results</label><br />
-  <textarea id="result"></textarea>
-  <script>
+    <h2>JWT Client</h2>
+    <div id="theGrid"class="grid-container">
+        <div id="data"class="grid-item" >
+            <h3>Data for JWT</h3>
+            <p>This is the data used to create the JWT. The Server recognizes 2 roles: "admin" and "super".</p>
+            <p>(We can simulate a log in failure by checking "Fail")</p>
+            <label for="txtUserName">User Name </label><input type="text" id="txtUserName" value="johns" /><br />
+            <label for="txtRole">Role</label><input type="text" id="txtRole" value="admin" /><br />
+            <label for="txtId">Id</label><input type="number" id="txtId" value="42" /><br />
+            <label for="chkFail">Fail</label><input type="checkbox" id="chkFail" value="false" /><br />
+        </div>
+        <div id="access" class="grid-item">
+            <h3>Make JWT</h3>
+            <p>Here we get the JWT from the "server", store and retrieve the JWT.</p>
+            <p>The JWT is stored in Local Storage.</p>
+            <button type="button" onclick="getJwt()">Get Token</button><br />
+            <button type="button" onclick="showJwt()">Show Token</button><br />
+            <button type="button" onclick="decode()">Decode</button><br />
+            <button type="button" onclick="deleteJwt()">Clear Token</button><br />
+        </div>
+        <div id="use" class="grid-item">
+            <h3>Use JWT</h3>
+            <p>Here we use the JWT we stored in Local Storage and make calls to             
+            various endpoints which have different permissions on the server</p>
+            <p>The Server decodes the claims in the JWT and returns them as JSON object</p>
+            <button type="button" onclick="makeCall('')">Call "/"</button><br />
+            <button type="button" onclick="makeCall('/admin')">Call "/admin"</button><br />
+            <button type="button" onclick="makeCall('/super')">Call "/super"</button><br />
+            <button type="button" onclick="makeCall('/either')">Call "/either"</button><br />
+            <button type="button" onclick="makeCall('/open')">Call "/open"</button><br />
+        </div>
+    </div>
+    <div id="results">
+        <label for="result">Results</label><br />
+        <textarea id="result"></textarea>
+    </div>
+    <script>
+        const BASE_URL = "/api/";
+        function getJwt() {
+            showResults("working ....");
 
-    function getJwt() {
+            // Assemble data to log in, should match schema of MakeTokenViewModel
+            const userName = document.getElementById("txtUserName").value;
+            const role = document.getElementById("txtRole").value;
+            const id = document.getElementById("txtId").value;
+            const fail = document.getElementById("chkFail").checked;
+            const message = `{"UserName":"${userName}","Role": "${role}","Id": ${id},"Fail":${fail}}`;
 
-      showResults("working ....");
-      const userName = document.getElementById("txtUserName").value;
-      const role = document.getElementById("txtRole").value;
-      const id = document.getElementById("txtId").value;
-      const fail = document.getElementById("chkFail").checked;
-
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4) {
-          if (this.status == 200) {
-            writeJwt(this.responseText);
-            showResults("token written to localStorage");
-          }
-          else {
-            alert(`${this.status}\n ${this.responseText}`);
-            showResults("Failed!");
-          }
+            // Make the request
+            const xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = getJwtProcessResponse;
+            xhttp.open("Post", `${BASE_URL}jwt/maketoken`, true);
+            xhttp.setRequestHeader("content-Type", "application/json");
+            xhttp.send(message);
         }
-      };
-      xhttp.open("Post", "/api/jwt/maketoken", true);
-      xhttp.setRequestHeader("content-Type", "application/json");
-      var message = `{"UserName":"${userName}","Role": "${role}","Id": ${id},"Fail":${fail}}`;
-      xhttp.send(message);
-    }
 
-    function makeCall(urlExtension) {
-
-      showResults("working ....");
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4) {
-          if (this.status == 200) {
-            showResults(this.responseText);
-          }
-          else {
-            alert(`${this.status}\n ${this.responseText}`);
-            showResults("Failed!");
-          }
+        // Get and process the request
+        function getJwtProcessResponse() {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    writeJwt(this.responseText);
+                    showResults("token written to localStorage");
+                }
+                else {
+                    alert(`${this.status}\n ${this.responseText}`);
+                    showResults("Failed!");
+                }
+            }
         }
-      };
-      const jwt = readJwt();
-      xhttp.open("Get", `/api/values${urlExtension}`, true);
-      if (!!jwt) {
-        xhttp.setRequestHeader("Authorization", ` Bearer  ${jwt}`);
-      }
-      xhttp.send();
-    }
 
+        // Make a call to the end point specified by urlExtension
+        // (each endpoint has a different permission, for demo purpose)
+        function makeCall(urlExtension) {
+            showResults("working ....");
+            const jwt = readJwt();
+            const xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = makeCallProcessResponse;
+            xhttp.open("Get", `${BASE_URL}values${urlExtension}`, true);
+            // We want to test with the user not logged in
+            if (!!jwt) {
+                xhttp.setRequestHeader("Authorization", ` Bearer  ${jwt}`);
+            }
+            xhttp.send();
+        }
 
-    function showJwt() {
-      const jwt = readJwt();
-      if (jwt === null) {
-         showResults("no token to display");
-        return;
-      }
-      showResults(jwt);
-    }
+        function makeCallProcessResponse() {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    showResults(this.responseText);
+                }
+                else {
+                    alert(`${this.status}\n ${this.responseText}`);
+                    showResults("Failed!");
+                }
+            }
+        }
 
-    function deleteJwt() {
-      clearJwt();
-    }
+        function showJwt() {
+            const jwt = readJwt();
+            if (jwt === null) {
+                showResults("no token to display");
+                return;
+            }
+            showResults(jwt);
+        }
 
-    function writeJwt(jwt) {
-      if (typeof Storage !== "undefined") {
-        localStorage.setItem("jwt", jwt);
-      } else {
-        showResults("Sorry, your browser does not support Web Storage...")
-      }
-    }
+        function deleteJwt() {
+            clearJwt();
+        }
 
-    function readJwt() {
-      if (typeof Storage !== "undefined") {
-        return localStorage.getItem("jwt");
-      } else {
-        showResults("Sorry, your browser does not support Web Storage...");
-      }
-      return "";
-    }
+        function writeJwt(jwt) {
+            if (typeof Storage !== "undefined") {
+                localStorage.setItem("jwt", jwt);
+            } else {
+                showResults("Sorry, your browser does not support Web Storage...")
+            }
+        }
 
-    function clearJwt() {
-      if (typeof Storage !== "undefined") {
-        localStorage.removeItem("jwt");
-      } else {
-        showResults("Sorry, your browser does not support Web Storage...");
-      }
-    }
+        function readJwt() {
+            if (typeof Storage !== "undefined") {
+                return localStorage.getItem("jwt");
+            } else {
+                showResults("Sorry, your browser does not support Web Storage...");
+            }
+            return "";
+        }
 
-    function decode() {
-      const jwt = readJwt();
-      if (jwt == null) {
-        showResults("no token to decode");
-        return;
-      }
-      const parsed = parseJwt(jwt);
-      showResults(JSON.stringify(parsed, null, 2));
-    }
+        function clearJwt() {
+            if (typeof Storage !== "undefined") {
+                localStorage.removeItem("jwt");
+            } else {
+                showResults("Sorry, your browser does not support Web Storage...");
+            }
+        }
 
-    //see https://stackoverflow.com/a/38552302/3819
-    function parseJwt(token) {
-      var base64Url = token.split('.')[1];
-      var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      return JSON.parse(window.atob(base64));
-    };
+        function decode() {
+            const jwt = readJwt();
+            if (jwt == null) {
+                showResults("no token to decode");
+                return;
+            }
+            const parsed = parseJwt(jwt);
+            showResults(JSON.stringify(parsed, null, 2));
+        }
 
-    function showResults(results) {
-      document.getElementById("result").value = results;
-    }
-  </script>
+        //see https://stackoverflow.com/a/38552302/3819
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(window.atob(base64));
+        };
+
+        function showResults(results) {
+            document.getElementById("result").value = results;
+        }
+    </script>
 </body>
 </html>
