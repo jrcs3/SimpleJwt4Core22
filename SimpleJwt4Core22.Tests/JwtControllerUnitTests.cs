@@ -15,9 +15,9 @@ namespace SimpleJwt4Core22.Tests
         public JwtControllerUnitTests()
         {
             _mockConfiguration = new Mock<IConfiguration>();
-            _mockConfiguration.Setup(x => x[It.Is<string>(s => s == "Jwt:SigningKey")]).Returns("To be or not to be, that's the question!");
-            _mockConfiguration.Setup(x => x[It.Is<string>(s => s == "Jwt:ExperyInMinutes")]).Returns("1");
-            _mockConfiguration.Setup(x => x[It.Is<string>(s => s == "Jwt:Site")]).Returns("http://example.com");
+            _mockConfiguration.Setup(x => x[It.Is<string>(s => s == Settings.JWT_SIGNING_KEY_KEY)]).Returns(Settings.JWT_SIGNING_KEY_VALUE);
+            _mockConfiguration.Setup(x => x[It.Is<string>(s => s == Settings.JWT_EXPEPRY_KEY)]).Returns(Settings.JWT_EXPEPRY_VALUE);
+            _mockConfiguration.Setup(x => x[It.Is<string>(s => s == Settings.JWT_SITE_KEY)]).Returns(Settings.JWT_SITE_VALUE);
         }
         [Fact]
         public void LoginSuccess()
