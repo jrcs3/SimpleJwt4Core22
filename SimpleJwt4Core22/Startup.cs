@@ -51,6 +51,20 @@ namespace SimpleJwt4Core224Core22
 
             // We intend to use MVC
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            // Map the roles here. Easier to upgrade to Claims Based
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(
+                    "EitherPolicy",
+                    policy => policy.RequireRole("super", "admin"));
+                options.AddPolicy(
+                    "AdminPolicy",
+                    policy => policy.RequireRole("admin"));
+                options.AddPolicy(
+                    "SuperPolicy",
+                    policy => policy.RequireRole("super"));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

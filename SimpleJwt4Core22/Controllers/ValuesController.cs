@@ -29,7 +29,7 @@ namespace SimpleJwt4Core22.Controllers
         // All of these endpoints do the same thing except for the 
         // authorized roles
         [Route("admin")]
-        [Authorize(Roles = "admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpGet]
         public IActionResult GetAdmin()
         {
@@ -37,7 +37,7 @@ namespace SimpleJwt4Core22.Controllers
         }
 
         [Route("super")]
-        [Authorize(Roles = "super")]
+        [Authorize(Policy = "SuperPolicy")]
         [HttpGet]
         public IActionResult GetSuper()
         {
@@ -45,7 +45,7 @@ namespace SimpleJwt4Core22.Controllers
         }
 
         [Route("either")]
-        [Authorize(Roles = "super,admin")]
+        [Authorize(Policy = "EitherPolicy")]
         [HttpGet]
         public IActionResult GetBoth()
         {
